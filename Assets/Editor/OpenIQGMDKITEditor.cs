@@ -108,6 +108,29 @@ public class OpenIQGMDKITEditor : EditorWindow
         EnsureRequiredTags();
         EnsureInputHandlingIsCompatible();
 
+        bool anyExists = File.Exists(TitleScenePath) || File.Exists(GameScenePath) || File.Exists(GameOverScenePath);
+        if (anyExists)
+        {
+            bool overwrite = EditorUtility.DisplayDialog(
+                "OpenIQ GMDKIT",
+                "One or more scenes (Title, Game, GameOver) already exist. Overwrite them?\n\nChoose Cancel to add existing scenes to Build Settings without changes.",
+                "Overwrite",
+                "Cancel");
+
+            if (!overwrite)
+            {
+                AddScenesToBuildSettings(TitleScenePath, GameScenePath, GameOverScenePath);
+                if (File.Exists(TitleScenePath))
+                    EditorSceneManager.OpenScene(TitleScenePath, OpenSceneMode.Single);
+                EditorUtility.DisplayDialog("OpenIQ GMDKIT", "Existing scenes added to Build Settings without overwriting.", "OK");
+                return;
+            }
+        }
+
+        // Save unsaved changes in currently open scenes before switching (returns false if user cancels)
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo())
+            return;
+
         Scene titleScene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
         titleScene.name = "Title";
         EnsureEventSystem();
